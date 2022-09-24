@@ -54,10 +54,10 @@ impl Evaluator {
     }
 
     pub fn get_hand_rank(&self, handkey: u32) -> u32 {
-        !if Evaluator::is_flush(handkey) {
-            self.flushes[&handkey]
+        if Evaluator::is_flush(handkey) {
+            self.flushes[&(handkey & 0x7FFFFFF)]
         } else {
-            self.non_flushes[&handkey]
+            self.non_flushes[&(handkey & 0x7FFFFFF)]
         }
     }
 
@@ -236,8 +236,8 @@ impl Evaluator {
 }
 
 fn get_val(hand: [&char; 5]) -> u32 {
-    let mut val = RANKS[hand[0]];
-    for rank in &hand[1..5] {
+    let mut val = 1;
+    for rank in &hand[0..5] {
         val *= RANKS[rank];
     }
     val
@@ -282,7 +282,7 @@ fn make_sets(ranks: Vec<&'static char>, size: usize) -> Vec<[&'static char; 5]> 
 
 #[cfg(test)]
 mod tests {
-    use crate::evaluator::{contains_pair, get_val};
+    use crate::evaluator::{contains_pair, get_val, RANKS};
     use crate::Evaluator;
 
     #[test]
@@ -301,11 +301,13 @@ mod tests {
             Evaluator::is_flush(0b1111 << 27 | 41_u32.pow(4) * 37)
         );
         assert_eq!(true, Evaluator::is_flush(0b1000 << 27 | 41_u32.pow(4) * 37));
+        assert_eq!(true, Evaluator::is_flush(0b0001 << 27 | 41_u32.pow(4) * 37));
     }
 
     #[test]
     fn get_val_test() {
         assert_eq!(104_553_157, get_val([&'A', &'A', &'A', &'A', &'K']));
+        assert_eq!(31_367_009, get_val([&'A', &'K', &'Q', &'J', &'T']));
         assert_eq!(630, get_val([&'2', &'3', &'3', &'4', &'5']));
         assert_eq!(457_653, get_val([&'5', &'Q', &'3', &'K', &'9']));
     }
@@ -315,5 +317,18 @@ mod tests {
         assert_eq!(true, contains_pair([&'A', &'A', &'A', &'A', &'K']));
         assert_eq!(true, contains_pair([&'2', &'3', &'3', &'4', &'5']));
         assert_eq!(false, contains_pair([&'5', &'Q', &'3', &'K', &'9']));
+    }
+
+    #[test]
+    fn get_rank_test() {
+        let e = Evaluator::new();
+        assert_eq!(
+            11,
+            e.get_hand_rank(0b1111 << 27 | RANKS[&'A'].pow(4) * RANKS[&'K'])
+        ); // 4 aces and a K
+        assert_eq!(
+            1,
+            e.get_hand_rank(0b1000 << 27 | get_val([&'A', &'K', &'Q', &'J', &'T']))
+        ); // Best Hand
     }
 }
