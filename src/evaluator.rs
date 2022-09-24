@@ -1,6 +1,29 @@
 use phf::phf_ordered_map;
 use std::collections::HashMap;
 
+static RANKS: phf::OrderedMap<char, u32> = phf_ordered_map! {
+    '2' => 2,
+    '3' => 3,
+    '4' => 5,
+    '5' => 7,
+    '6' => 11,
+    '7' => 13,
+    '8' => 17,
+    '9' => 19,
+    'T' => 23,
+    'J' => 29,
+    'Q' => 31,
+    'K' => 37,
+    'A' => 41,
+};
+
+static SUITS: phf::OrderedMap<char, u32> = phf_ordered_map! {
+    'c' => 1 << 27,
+    'd' => 1 << 28,
+    'h' => 1 << 29,
+    's' => 1 << 30,
+};
+
 #[derive(Debug)]
 pub struct Hand {
     has_pair: bool,
@@ -31,16 +54,16 @@ impl Evaluator {
     }
 
     pub fn get_hand_rank(&self, handkey: u32) -> u32 {
-        return if Evaluator::is_flush(handkey) {
+        !if Evaluator::is_flush(handkey) {
             self.flushes[&handkey]
         } else {
             self.non_flushes[&handkey]
-        };
+        }
     }
 
     fn init(&mut self) {
         let ranks: Vec<char> = RANKS.keys().rev().cloned().collect();
-        //println!("{:?}", ranks);
+        //println!('{:?}', ranks);
 
         let mut straights: Vec<[&char; 5]> = vec![];
         for i in 0..9 {
@@ -55,7 +78,7 @@ impl Evaluator {
         }
         straights.push([&'5', &'4', &'3', &'2', &'A']);
 
-        //println!("{:?}", straights);
+        //println!('{:?}', straights);
         let ranks_asc: Vec<&char> = RANKS.keys().collect();
 
         let non_pairs: Vec<[&char; 5]> = make_sets(ranks_asc, 5);
@@ -73,7 +96,7 @@ impl Evaluator {
         }
         filtered_non_pairs.reverse();
 
-        //println!("{:?}", filtered_non_pairs.len());
+        //println!('{:?}', filtered_non_pairs.len());
 
         let mut quads: Vec<[&char; 5]> = vec![];
         for quad_rank in &ranks {
@@ -97,7 +120,7 @@ impl Evaluator {
             }
         }
 
-        //println!("{:?}", fulls);
+        //println!('{:?}', fulls);
 
         let mut trips: Vec<[&char; 5]> = vec![];
         for trips_rank in &ranks {
@@ -122,7 +145,7 @@ impl Evaluator {
             }
         }
 
-        //println!("{:?}", trips);
+        //println!('{:?}', trips);
 
         let mut two_pairs: Vec<[&char; 5]> = vec![];
         for pair1_rank in &ranks {
@@ -141,7 +164,7 @@ impl Evaluator {
             }
         }
 
-        //println!("{:?}", twoPairs);
+        //println!('{:?}', twoPairs);
 
         let mut pairs: Vec<[&char; 5]> = vec![];
         for pair_rank in &ranks {
@@ -172,7 +195,7 @@ impl Evaluator {
             }
         }
 
-        //println!("{:?}", pairs);
+        //println!('{:?}', pairs);
 
         let all_hands = [
             straights.clone(),
@@ -187,7 +210,7 @@ impl Evaluator {
         ]
         .concat();
 
-        //println!("{:?}", all_hands);
+        //println!('{:?}', all_hands);
 
         let mut evaluated_hands: Vec<Hand> = vec![];
         let mut i = 1;
@@ -200,7 +223,7 @@ impl Evaluator {
             i += 1;
         }
 
-        //println!("{:?}", evaluated_hands);
+        //println!('{:?}', evaluated_hands);
 
         for (i, hand) in evaluated_hands.iter().enumerate() {
             if i > 1598 || hand.has_pair {
@@ -215,7 +238,7 @@ impl Evaluator {
 fn get_val(hand: [&char; 5]) -> u32 {
     let mut val = RANKS[hand[0]];
     for rank in &hand[1..5] {
-        val = val * RANKS[rank];
+        val *= RANKS[rank];
     }
     val
 }
@@ -249,7 +272,7 @@ fn make_sets(ranks: Vec<&'static char>, size: usize) -> Vec<[&'static char; 5]> 
             }
         }
         if result.len() == size {
-            results.push([result[0], &result[1], &result[2], &result[3], &result[4]])
+            results.push([result[0], result[1], result[2], result[3], result[4]])
         }
 
         mask += 1;
