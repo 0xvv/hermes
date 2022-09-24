@@ -280,25 +280,40 @@ fn make_sets(ranks: Vec<&'static char>, size: usize) -> Vec<[&'static char; 5]> 
     results
 }
 
-static RANKS: phf::OrderedMap<char, u32> = phf_ordered_map! {
-    '2' => 2,
-    '3' => 3,
-    '4' => 5,
-    '5' => 7,
-    '6' => 11,
-    '7' => 13,
-    '8' => 17,
-    '9' => 19,
-    'T' => 23,
-    'J' => 29,
-    'Q' => 31,
-    'K' => 37,
-    'A' => 41,
-};
+#[cfg(test)]
+mod tests {
+    use crate::evaluator::{contains_pair, get_val};
+    use crate::Evaluator;
 
-static SUITS: phf::OrderedMap<char, u32> = phf_ordered_map! {
-    'c' => 1 << 27,
-    'd' => 1 << 28,
-    'h' => 1 << 29,
-    's' => 1 << 30,
-};
+    #[test]
+    fn is_flush_test() {
+        assert_eq!(false, Evaluator::is_flush(0b1010 << 27));
+        assert_eq!(false, Evaluator::is_flush(0b0101 << 27));
+        assert_eq!(false, Evaluator::is_flush(0b1111 << 27));
+
+        assert_eq!(true, Evaluator::is_flush(0b0001 << 27));
+        assert_eq!(true, Evaluator::is_flush(0b0010 << 27));
+        assert_eq!(true, Evaluator::is_flush(0b0100 << 27));
+        assert_eq!(true, Evaluator::is_flush(0b1000 << 27));
+
+        assert_eq!(
+            false,
+            Evaluator::is_flush(0b1111 << 27 | 41_u32.pow(4) * 37)
+        );
+        assert_eq!(true, Evaluator::is_flush(0b1000 << 27 | 41_u32.pow(4) * 37));
+    }
+
+    #[test]
+    fn get_val_test() {
+        assert_eq!(104_553_157, get_val([&'A', &'A', &'A', &'A', &'K']));
+        assert_eq!(630, get_val([&'2', &'3', &'3', &'4', &'5']));
+        assert_eq!(457_653, get_val([&'5', &'Q', &'3', &'K', &'9']));
+    }
+
+    #[test]
+    fn contains_pair_test() {
+        assert_eq!(true, contains_pair([&'A', &'A', &'A', &'A', &'K']));
+        assert_eq!(true, contains_pair([&'2', &'3', &'3', &'4', &'5']));
+        assert_eq!(false, contains_pair([&'5', &'Q', &'3', &'K', &'9']));
+    }
+}
