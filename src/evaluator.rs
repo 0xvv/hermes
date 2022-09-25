@@ -47,12 +47,14 @@ impl Evaluator {
     }
 
     pub fn is_flush(handkey: u32) -> bool {
-        (handkey & SUITS[&'c'] > 0)
-            ^ (handkey & SUITS[&'d'] > 0)
-            ^ (handkey & SUITS[&'h'] > 0)
-            ^ (handkey & SUITS[&'s'] > 0)
-    }
+        let c = handkey & SUITS[&'c'] > 0;
+        let d = handkey & SUITS[&'d'] > 0;
+        let h = handkey & SUITS[&'h'] > 0;
+        let s = handkey & SUITS[&'s'] > 0;
 
+        !c && !d && (h ^ s) || !h && !s && (c ^ d)
+    }
+    /// Get the rank of the hand, lower is better
     pub fn get_hand_rank(&self, handkey: u32) -> u32 {
         if Evaluator::is_flush(handkey) {
             self.flushes[&(handkey & 0x7FFFFFF)]
@@ -282,7 +284,7 @@ fn make_sets(ranks: Vec<&'static char>, size: usize) -> Vec<[&'static char; 5]> 
 
 #[cfg(test)]
 mod tests {
-    use crate::evaluator::{contains_pair, get_val, RANKS};
+    use crate::evaluator::{contains_pair, get_val, RANKS, SUITS};
     use crate::Evaluator;
 
     #[test]
@@ -290,12 +292,21 @@ mod tests {
         assert_eq!(false, Evaluator::is_flush(0b1010 << 27));
         assert_eq!(false, Evaluator::is_flush(0b0101 << 27));
         assert_eq!(false, Evaluator::is_flush(0b1111 << 27));
+        assert_eq!(false, Evaluator::is_flush(0b1011 << 27));
+        assert_eq!(false, Evaluator::is_flush(0b1101 << 27));
+        assert_eq!(false, Evaluator::is_flush(0b1001 << 27));
+        assert_eq!(false, Evaluator::is_flush(0b0110 << 27));
 
         assert_eq!(true, Evaluator::is_flush(0b0001 << 27));
+        assert_eq!(true, Evaluator::is_flush(SUITS[&'c']));
         assert_eq!(true, Evaluator::is_flush(0b0010 << 27));
+        assert_eq!(true, Evaluator::is_flush(SUITS[&'d']));
         assert_eq!(true, Evaluator::is_flush(0b0100 << 27));
+        assert_eq!(true, Evaluator::is_flush(SUITS[&'s']));
         assert_eq!(true, Evaluator::is_flush(0b1000 << 27));
+        assert_eq!(true, Evaluator::is_flush(SUITS[&'h']));
 
+        assert_eq!(true, Evaluator::is_flush(SUITS[&'c'] | get_val([&'9', &'K', &'Q', &'J', &'T'])));
         assert_eq!(
             false,
             Evaluator::is_flush(0b1111 << 27 | 41_u32.pow(4) * 37)
@@ -310,6 +321,7 @@ mod tests {
         assert_eq!(31_367_009, get_val([&'A', &'K', &'Q', &'J', &'T']));
         assert_eq!(630, get_val([&'2', &'3', &'3', &'4', &'5']));
         assert_eq!(457_653, get_val([&'5', &'Q', &'3', &'K', &'9']));
+        assert_eq!(14_535_931,  get_val([&'9', &'K', &'Q', &'J', &'T']));
     }
 
     #[test]
