@@ -1,6 +1,6 @@
 mod evaluator;
 
-use crate::evaluator::{Evaluator, get_val, SUITS};
+use crate::evaluator::{get_val, Evaluator, SUITS};
 use std::time::Instant;
 
 fn main() {
@@ -18,7 +18,6 @@ fn main() {
         e.get_hand_rank(0b1011 << 27 | get_val([&'A', &'K', &'Q', &'J', &'T']));
         e.get_hand_rank(0b0111 << 27 | get_val([&'A', &'3', &'4', &'J', &'T']));
         e.get_hand_rank(0b0111 << 27 | get_val([&'6', &'6', &'6', &'A', &'K']));
-
     }
 
     let end = Instant::now();

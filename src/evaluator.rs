@@ -1,7 +1,4 @@
 use phf::phf_ordered_map;
-use nohash_hasher::NoHashHasher;
-use std::{collections::HashMap, hash::BuildHasherDefault};
-
 
 pub(crate) static RANKS: phf::OrderedMap<char, u32> = phf_ordered_map! {
     '2' => 2,
@@ -34,15 +31,15 @@ pub struct Hand {
 }
 
 pub struct Evaluator {
-    flushes: HashMap::<u32, u32, BuildHasherDefault<NoHashHasher<u32>>>,
-    non_flushes: HashMap::<u32, u32, BuildHasherDefault<NoHashHasher<u32>>>,
+    flushes: fnv::FnvHashMap<u32, u32>,
+    non_flushes: fnv::FnvHashMap<u32, u32>,
 }
 
 impl Evaluator {
     pub fn new() -> Evaluator {
         let mut e = Evaluator {
-            flushes: HashMap::with_hasher(BuildHasherDefault::default()),
-            non_flushes: HashMap::with_hasher(BuildHasherDefault::default()),
+            flushes: fnv::FnvHashMap::default(),
+            non_flushes: fnv::FnvHashMap::default(),
         };
         e.init();
         e
@@ -311,7 +308,10 @@ mod tests {
         assert_eq!(true, Evaluator::is_flush(0b1000 << 27));
         assert_eq!(true, Evaluator::is_flush(SUITS[&'h']));
 
-        assert_eq!(true, Evaluator::is_flush(SUITS[&'c'] | get_val([&'9', &'K', &'Q', &'J', &'T'])));
+        assert_eq!(
+            true,
+            Evaluator::is_flush(SUITS[&'c'] | get_val([&'9', &'K', &'Q', &'J', &'T']))
+        );
         assert_eq!(
             false,
             Evaluator::is_flush(0b1111 << 27 | 41_u32.pow(4) * 37)
@@ -326,7 +326,7 @@ mod tests {
         assert_eq!(31_367_009, get_val([&'A', &'K', &'Q', &'J', &'T']));
         assert_eq!(630, get_val([&'2', &'3', &'3', &'4', &'5']));
         assert_eq!(457_653, get_val([&'5', &'Q', &'3', &'K', &'9']));
-        assert_eq!(14_535_931,  get_val([&'9', &'K', &'Q', &'J', &'T']));
+        assert_eq!(14_535_931, get_val([&'9', &'K', &'Q', &'J', &'T']));
     }
 
     #[test]
@@ -414,6 +414,5 @@ mod tests {
             rank_flush,
             rank_straight
         );
-
     }
 }
