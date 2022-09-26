@@ -348,4 +348,72 @@ mod tests {
             e.get_hand_rank(0b1000 << 27 | get_val([&'A', &'K', &'Q', &'J', &'T']))
         ); // Best Hand
     }
+
+    #[test]
+    fn flush_agnostic_test() {
+        let e = Evaluator::new();
+        assert_eq!(
+            e.get_hand_rank(0b0100 << 27 | get_val([&'A', &'K', &'Q', &'J', &'T'])),
+            e.get_hand_rank(0b1000 << 27 | get_val([&'A', &'K', &'Q', &'J', &'T']))
+        );
+        assert_eq!(
+            e.get_hand_rank(0b0010 << 27 | get_val([&'A', &'K', &'Q', &'J', &'T'])),
+            e.get_hand_rank(0b0001 << 27 | get_val([&'A', &'K', &'Q', &'J', &'T']))
+        );
+    }
+
+    #[test]
+    fn inter_hands_compare_test() {
+        let e = Evaluator::new();
+        let rank_royal_flush =
+            e.get_hand_rank(SUITS[&'h'] | get_val([&'A', &'K', &'Q', &'J', &'T'])); // 1
+        let rank_straight_flush =
+            e.get_hand_rank(SUITS[&'c'] | get_val([&'9', &'K', &'Q', &'J', &'T'])); // 2
+        let rank_quads_aces_king =
+            e.get_hand_rank(0b1111 << 27 | get_val([&'A', &'A', &'A', &'A', &'K'])); // 11
+        let ranks_quads_kings_ace =
+            e.get_hand_rank(0b1111 << 27 | get_val([&'K', &'K', &'K', &'K', &'A'])); // 12
+        let rank_full_ak = e.get_hand_rank(0b1111 << 27 | get_val([&'A', &'A', &'A', &'K', &'K']));
+        let rank_flush = e.get_hand_rank(SUITS[&'c'] | get_val([&'A', &'Q', &'T', &'2', &'7']));
+        let rank_straight = e.get_hand_rank(0b1011 << 27 | get_val([&'A', &'K', &'Q', &'J', &'T']));
+        let rank_high_ace = e.get_hand_rank(0b0111 << 27 | get_val([&'A', &'3', &'4', &'J', &'T']));
+
+        assert!(
+            rank_royal_flush < rank_straight_flush,
+            "{} > {}",
+            rank_royal_flush,
+            rank_straight_flush
+        );
+        assert!(
+            rank_straight_flush < rank_quads_aces_king,
+            "{} > {}",
+            rank_straight_flush,
+            rank_quads_aces_king
+        );
+        assert!(
+            rank_quads_aces_king < ranks_quads_kings_ace,
+            "{} > {}",
+            rank_quads_aces_king,
+            ranks_quads_kings_ace
+        );
+        assert!(
+            ranks_quads_kings_ace < rank_full_ak,
+            "{} > {}",
+            ranks_quads_kings_ace,
+            rank_full_ak
+        );
+        assert!(
+            rank_full_ak < rank_flush,
+            "{} > {}",
+            rank_full_ak,
+            rank_flush
+        );
+        assert!(
+            rank_flush < rank_straight,
+            "{} > {}",
+            rank_flush,
+            rank_straight
+        );
+
+    }
 }
