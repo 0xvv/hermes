@@ -1,7 +1,9 @@
 use phf::phf_ordered_map;
-use std::collections::HashMap;
+use nohash_hasher::NoHashHasher;
+use std::{collections::HashMap, hash::BuildHasherDefault};
 
-static RANKS: phf::OrderedMap<char, u32> = phf_ordered_map! {
+
+pub(crate) static RANKS: phf::OrderedMap<char, u32> = phf_ordered_map! {
     '2' => 2,
     '3' => 3,
     '4' => 5,
@@ -17,7 +19,7 @@ static RANKS: phf::OrderedMap<char, u32> = phf_ordered_map! {
     'A' => 41,
 };
 
-static SUITS: phf::OrderedMap<char, u32> = phf_ordered_map! {
+pub(crate) static SUITS: phf::OrderedMap<char, u32> = phf_ordered_map! {
     'c' => 1 << 27,
     'd' => 1 << 28,
     'h' => 1 << 29,
@@ -32,15 +34,15 @@ pub struct Hand {
 }
 
 pub struct Evaluator {
-    flushes: HashMap<u32, u32>,
-    non_flushes: HashMap<u32, u32>,
+    flushes: HashMap::<u32, u32, BuildHasherDefault<NoHashHasher<u32>>>,
+    non_flushes: HashMap::<u32, u32, BuildHasherDefault<NoHashHasher<u32>>>,
 }
 
 impl Evaluator {
     pub fn new() -> Evaluator {
         let mut e = Evaluator {
-            flushes: HashMap::new(),
-            non_flushes: HashMap::new(),
+            flushes: HashMap::with_hasher(BuildHasherDefault::default()),
+            non_flushes: HashMap::with_hasher(BuildHasherDefault::default()),
         };
         e.init();
         e
@@ -234,10 +236,13 @@ impl Evaluator {
                 self.flushes.insert(hand.val, hand.rank);
             }
         }
+
+        //println!("{:?}", self.flushes);
+        //println!("{:?}", self.non_flushes);
     }
 }
 
-fn get_val(hand: [&char; 5]) -> u32 {
+pub(crate) fn get_val(hand: [&char; 5]) -> u32 {
     let mut val = 1;
     for rank in &hand[0..5] {
         val *= RANKS[rank];
