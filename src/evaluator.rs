@@ -45,6 +45,7 @@ impl Evaluator {
         e
     }
 
+    /// Checks if the hand only contains one suit
     pub fn is_flush(handkey: u32) -> bool {
         let c = handkey & SUITS[&'c'] > 0;
         let d = handkey & SUITS[&'d'] > 0;
@@ -53,12 +54,13 @@ impl Evaluator {
 
         !c && !d && (h ^ s) || !h && !s && (c ^ d)
     }
+
     /// Get the rank of the hand, lower is better
     pub fn get_hand_rank(&self, handkey: u32) -> u32 {
         if Evaluator::is_flush(handkey) {
-            self.flushes[&(handkey & 0x7FFFFFF)]
+            self.flushes[&(handkey & 0x07FFFFFF)]
         } else {
-            self.non_flushes[&(handkey & 0x7FFFFFF)]
+            self.non_flushes[&(handkey & 0x07FFFFFF)]
         }
     }
 
@@ -83,8 +85,7 @@ impl Evaluator {
         let ranks_asc: Vec<&char> = RANKS.keys().collect();
 
         let non_pairs: Vec<[&char; 5]> = make_sets(ranks_asc, 5);
-
-        let mut filtered_non_pairs = vec![];
+        let mut filtered_non_pairs: Vec<[&char; 5]> = vec![];
 
         for set in &non_pairs {
             if !straights
@@ -92,7 +93,7 @@ impl Evaluator {
                 .map(|cards| cards.iter().collect::<Vec<_>>())
                 .any(|cards| cards == set.iter().collect::<Vec<_>>())
             {
-                filtered_non_pairs.push(set);
+                filtered_non_pairs.push(set.clone());
             }
         }
         filtered_non_pairs.reverse();
@@ -202,12 +203,12 @@ impl Evaluator {
             straights.clone(),
             quads,
             fulls,
-            non_pairs.clone(),
+            filtered_non_pairs.clone(),
             straights,
             trips,
             two_pairs,
             pairs,
-            non_pairs,
+            filtered_non_pairs,
         ]
         .concat();
 
@@ -377,6 +378,10 @@ mod tests {
         let rank_flush = e.get_hand_rank(SUITS[&'c'] | get_val([&'A', &'Q', &'T', &'2', &'7']));
         let rank_straight = e.get_hand_rank(0b1011 << 27 | get_val([&'A', &'K', &'Q', &'J', &'T']));
         let rank_high_ace = e.get_hand_rank(0b0111 << 27 | get_val([&'A', &'3', &'4', &'J', &'T']));
+        let rank_trips = e.get_hand_rank(0b0111 << 27 | get_val([&'A', &'A', &'A', &'J', &'T']));
+        let rank_dub_pairs =
+            e.get_hand_rank(0b1011 << 27 | get_val([&'A', &'A', &'J', &'J', &'T']));
+        let rank_pairs = e.get_hand_rank(0b0111 << 27 | get_val([&'A', &'A', &'4', &'J', &'T']));
 
         assert!(
             rank_royal_flush < rank_straight_flush,
@@ -414,5 +419,11 @@ mod tests {
             rank_flush,
             rank_straight
         );
+
+        assert!(rank_straight < rank_trips);
+        assert!(rank_trips < rank_dub_pairs);
+        assert!(rank_dub_pairs < rank_pairs);
+        assert!(rank_pairs < rank_high_ace);
     }
+
 }
