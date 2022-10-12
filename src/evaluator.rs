@@ -93,7 +93,7 @@ impl Evaluator {
                 .map(|cards| cards.iter().collect::<Vec<_>>())
                 .any(|cards| cards == set.iter().collect::<Vec<_>>())
             {
-                filtered_non_pairs.push(set.clone());
+                filtered_non_pairs.push(*set);
             }
         }
         filtered_non_pairs.reverse();
@@ -300,25 +300,24 @@ mod tests {
         assert_eq!(false, Evaluator::is_flush(0b1001 << 27));
         assert_eq!(false, Evaluator::is_flush(0b0110 << 27));
 
-        assert_eq!(true, Evaluator::is_flush(0b0001 << 27));
-        assert_eq!(true, Evaluator::is_flush(SUITS[&'c']));
-        assert_eq!(true, Evaluator::is_flush(0b0010 << 27));
-        assert_eq!(true, Evaluator::is_flush(SUITS[&'d']));
-        assert_eq!(true, Evaluator::is_flush(0b0100 << 27));
-        assert_eq!(true, Evaluator::is_flush(SUITS[&'s']));
-        assert_eq!(true, Evaluator::is_flush(0b1000 << 27));
-        assert_eq!(true, Evaluator::is_flush(SUITS[&'h']));
+        assert!(Evaluator::is_flush(0b0001 << 27));
+        assert!(Evaluator::is_flush(SUITS[&'c']));
+        assert!(Evaluator::is_flush(0b0010 << 27));
+        assert!(Evaluator::is_flush(SUITS[&'d']));
+        assert!(Evaluator::is_flush(0b0100 << 27));
+        assert!(Evaluator::is_flush(SUITS[&'s']));
+        assert!(Evaluator::is_flush(0b1000 << 27));
+        assert!(Evaluator::is_flush(SUITS[&'h']));
 
-        assert_eq!(
-            true,
-            Evaluator::is_flush(SUITS[&'c'] | get_val([&'9', &'K', &'Q', &'J', &'T']))
-        );
+        assert!(Evaluator::is_flush(
+            SUITS[&'c'] | get_val([&'9', &'K', &'Q', &'J', &'T'])
+        ));
         assert_eq!(
             false,
-            Evaluator::is_flush(0b1111 << 27 | 41_u32.pow(4) * 37)
+            Evaluator::is_flush(0b1111 << 27 | (41_u32.pow(4) * 37))
         );
-        assert_eq!(true, Evaluator::is_flush(0b1000 << 27 | 41_u32.pow(4) * 37));
-        assert_eq!(true, Evaluator::is_flush(0b0001 << 27 | 41_u32.pow(4) * 37));
+        assert!(Evaluator::is_flush(0b1000 << 27 | (41_u32.pow(4) * 37)));
+        assert!(Evaluator::is_flush(0b0001 << 27 | (41_u32.pow(4) * 37)));
     }
 
     #[test]
@@ -332,8 +331,8 @@ mod tests {
 
     #[test]
     fn contains_pair_test() {
-        assert_eq!(true, contains_pair([&'A', &'A', &'A', &'A', &'K']));
-        assert_eq!(true, contains_pair([&'2', &'3', &'3', &'4', &'5']));
+        assert!(contains_pair([&'A', &'A', &'A', &'A', &'K']));
+        assert!(contains_pair([&'2', &'3', &'3', &'4', &'5']));
         assert_eq!(false, contains_pair([&'5', &'Q', &'3', &'K', &'9']));
     }
 
@@ -342,7 +341,7 @@ mod tests {
         let e = Evaluator::new();
         assert_eq!(
             11,
-            e.get_hand_rank(0b1111 << 27 | RANKS[&'A'].pow(4) * RANKS[&'K'])
+            e.get_hand_rank(0b1111 << 27 | (RANKS[&'A'].pow(4) * RANKS[&'K']))
         ); // 4 aces and a K
         assert_eq!(
             1,
@@ -385,45 +384,33 @@ mod tests {
 
         assert!(
             rank_royal_flush < rank_straight_flush,
-            "{} > {}",
-            rank_royal_flush,
-            rank_straight_flush
+            "{rank_royal_flush} > {rank_straight_flush}"
         );
         assert!(
             rank_straight_flush < rank_quads_aces_king,
-            "{} > {}",
-            rank_straight_flush,
-            rank_quads_aces_king
+            "{rank_straight_flush} > {rank_quads_aces_king}"
         );
         assert!(
             rank_quads_aces_king < ranks_quads_kings_ace,
-            "{} > {}",
-            rank_quads_aces_king,
-            ranks_quads_kings_ace
+            "{rank_quads_aces_king} > {ranks_quads_kings_ace}"
         );
         assert!(
             ranks_quads_kings_ace < rank_full_ak,
-            "{} > {}",
-            ranks_quads_kings_ace,
-            rank_full_ak
+            "{ranks_quads_kings_ace} > {rank_full_ak}"
         );
+        assert!(rank_full_ak < rank_flush, "{rank_full_ak} > {rank_flush}");
+        assert!(rank_flush < rank_straight, "{rank_flush} > {rank_straight}");
+        assert!(rank_straight < rank_trips, "{rank_straight} > {rank_trips}");
         assert!(
-            rank_full_ak < rank_flush,
-            "{} > {}",
-            rank_full_ak,
-            rank_flush
-        );
-        assert!(
-            rank_flush < rank_straight,
-            "{} > {}",
-            rank_flush,
-            rank_straight
+            rank_trips < rank_dub_pairs,
+            "{rank_trips} > {rank_dub_pairs}"
         );
 
-        assert!(rank_straight < rank_trips);
-        assert!(rank_trips < rank_dub_pairs);
-        assert!(rank_dub_pairs < rank_pairs);
-        assert!(rank_pairs < rank_high_ace);
+        assert!(
+            rank_dub_pairs < rank_pairs,
+            "{rank_dub_pairs} > {rank_pairs}"
+        );
+
+        assert!(rank_pairs < rank_high_ace, "{rank_pairs} > {rank_high_ace}");
     }
-
 }
