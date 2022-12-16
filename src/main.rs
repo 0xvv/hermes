@@ -4,6 +4,7 @@ use crate::evaluator::{get_val, Evaluator, SUITS};
 use std::time::Instant;
 
 fn main() {
+    env_logger::init();
     let start = Instant::now();
 
     let e = Evaluator::new();

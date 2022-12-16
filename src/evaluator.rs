@@ -1,3 +1,4 @@
+use log::debug;
 use phf::phf_ordered_map;
 
 pub(crate) static RANKS: phf::OrderedMap<char, u32> = phf_ordered_map! {
@@ -66,7 +67,7 @@ impl Evaluator {
 
     fn init(&mut self) {
         let ranks: Vec<char> = RANKS.keys().rev().cloned().collect();
-        //println!('{:?}', ranks);
+        debug!("Ranks: {:?}\n\n\n", ranks);
 
         let mut straights: Vec<[&char; 5]> = vec![];
         for i in 0..9 {
@@ -81,7 +82,8 @@ impl Evaluator {
         }
         straights.push([&'5', &'4', &'3', &'2', &'A']);
 
-        //println!('{:?}', straights);
+        debug!("Straights: {:?}\n\n\n", straights);
+
         let ranks_asc: Vec<&char> = RANKS.keys().collect();
 
         let non_pairs: Vec<[&char; 5]> = make_sets(ranks_asc, 5);
@@ -98,7 +100,7 @@ impl Evaluator {
         }
         filtered_non_pairs.reverse();
 
-        //println!('{:?}', filtered_non_pairs.len());
+        debug!("Filtered non pairs: {:?}\n\n\n", filtered_non_pairs.len());
 
         let mut quads: Vec<[&char; 5]> = vec![];
         for quad_rank in &ranks {
@@ -122,7 +124,7 @@ impl Evaluator {
             }
         }
 
-        //println!('{:?}', fulls);
+        debug!("Fulls: {:?}\n\n\n", fulls);
 
         let mut trips: Vec<[&char; 5]> = vec![];
         for trips_rank in &ranks {
@@ -147,7 +149,7 @@ impl Evaluator {
             }
         }
 
-        //println!('{:?}', trips);
+        debug!("Trips: {:?}\n\n\n", trips);
 
         let mut two_pairs: Vec<[&char; 5]> = vec![];
         for pair1_rank in &ranks {
@@ -166,7 +168,7 @@ impl Evaluator {
             }
         }
 
-        //println!('{:?}', twoPairs);
+        debug!("Two pairs: {:?}\n\n\n", two_pairs);
 
         let mut pairs: Vec<[&char; 5]> = vec![];
         for pair_rank in &ranks {
@@ -197,7 +199,7 @@ impl Evaluator {
             }
         }
 
-        //println!('{:?}', pairs);
+        debug!("Pairs {:?}\n\n\n", pairs);
 
         let all_hands = [
             straights.clone(),
@@ -212,7 +214,7 @@ impl Evaluator {
         ]
         .concat();
 
-        //println!('{:?}', all_hands);
+        debug!("All: {:?}\n\n\n", all_hands);
 
         let mut evaluated_hands: Vec<Hand> = vec![];
         let mut i = 1;
@@ -225,7 +227,7 @@ impl Evaluator {
             i += 1;
         }
 
-        //println!('{:?}', evaluated_hands);
+        debug!("Evaluated hands: {:?}\n\n\n", evaluated_hands);
 
         for (i, hand) in evaluated_hands.iter().enumerate() {
             if i > 1598 || hand.has_pair {
@@ -235,8 +237,8 @@ impl Evaluator {
             }
         }
 
-        //println!("{:?}", self.flushes);
-        //println!("{:?}", self.non_flushes);
+        debug!("Final flushes map: {:?}\n\n\n", self.flushes);
+        debug!("Final non flushes map: {:?}\n\n\n", self.non_flushes);
     }
 }
 
